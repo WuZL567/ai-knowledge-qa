@@ -1,5 +1,5 @@
 """
-整合练习二 · 最小 AI 问答 Demo —— 后端（FastAPI）
+AI 知识库问答 Demo —— 后端（FastAPI）
 
 ================================================================================
 这个文件干什么
@@ -114,7 +114,7 @@ client = OpenAI(
 )
 
 # ================================================================================
-# 【1.5】RAG 索引 —— 里程碑 4B 新增（你来实现）
+# 【1.5】RAG 索引 —— 启动时建一次，全局共用
 # ================================================================================
 #
 #   要在这里做的事：**启动时建一次索引**，存进一个全局变量，之后所有请求共用。
@@ -267,9 +267,9 @@ def chatStreamRequest(data: ChatRequest):
     ★ 最容易搞混的一点：生成器负责「产生」，StreamingResponse 负责「发送」。
       只写生成器、不交给 StreamingResponse，浏览器一个字节都收不到。
 
-    ★★ 里程碑 4B：在调模型之前，按顺序插入四步（你来实现）
+    ★★ 调用模型之前，按顺序做这四步
         ① retrieve(data.message, store, k=TOP_K)      检索
-        ② filter_by_threshold(chunks)                 过滤低分（11.4.16）
+        ② filter_by_threshold(chunks)                 过滤低分
         ③ build_messages(...) 拼 messages              用带资料的 system prompt
            注意：原来的 build_messages(data) 用的是固定 SYSTEM_PROMPT，
                  接了 RAG 之后要走 rag_chain 那个版本，别两个混用。
@@ -299,7 +299,7 @@ def chatStreamRequest(data: ChatRequest):
 
         for chunk in response:
             # 流的最后一块只带元信息，choices 是空列表（不是 None！）。
-            # 直接取 chunk.choices[0] 会 IndexError —— 里程碑 2 就栽在这。
+            # 直接取 chunk.choices[0] 会 IndexError —— 第一版就栽在这。
             if not chunk.choices:
                 continue
 
@@ -337,6 +337,6 @@ def stream(data: ChatRequest):
     那样会被当成一个普通返回值一次性发出去）。
 
     media_type 必须是 text/event-stream：浏览器 EventSource 会检查这个头，
-    写成 text/plain 时 curl 测着一切正常，但一接前端就死 —— 里程碑 2 踩过这个坑。
+    写成 text/plain 时 curl 测着一切正常，但一接前端就死 —— 第一版踩过这个坑。
     """
     return StreamingResponse(chatStreamRequest(data), media_type="text/event-stream")

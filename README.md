@@ -1,12 +1,14 @@
-# 整合练习二：最小 AI 问答 Demo
+# AI 知识库问答 Demo
 
-> FastAPI + DeepSeek API + SSE 流式输出 + 前端对话界面
-> 一个能跑通完整链路的 AI 问答 Demo：多轮对话、流式逐字渲染、Markdown 展示、中途停止。
+> FastAPI + DeepSeek + RAG（bge-m3 向量检索）+ SSE 流式输出 + 零构建前端
+>
+> 完整闭环的知识库问答：**检索 → 阈值过滤 → 引用来源 → 流式逐字渲染**。
+> 知识库里没有的问题会**拒答**，而不是硬凑 top-k 让模型编一个。
 
 ## 目录结构
 
 ```
-src/integration-practice-2/
+.
 ├── README.md                # 本文件
 ├── backend/
 │   ├── main.py              # FastAPI 后端：/health、/chat、/chat/stream
@@ -29,12 +31,14 @@ src/integration-practice-2/
 
 ```bash
 # 后端（终端 1）
-cd src/integration-practice-2/backend
-cp .env.example .env          # 首次：填入你的 DeepSeek API Key
+cd backend
+python3 -m venv venv                # 首次：创建虚拟环境
+./venv/bin/pip install -r requirements.txt
+cp .env.example .env                # 首次：填入 DeepSeek 和硅基流动的 API Key
 ./venv/bin/uvicorn main:app --reload --port 8001
 
 # 前端（终端 2）
-cd src/integration-practice-2/frontend
+cd frontend
 python3 -m http.server 5500
 ```
 
@@ -85,18 +89,15 @@ python3 -m http.server 5500
 
 ## 已实现的能力
 
-| 能力 | 实现位置 | 对应清单技术点 | 状态 |
-|------|---------|--------------|:----:|
-| 后端骨架 + 参数校验 | `main.py` Pydantic 模型 | 10.10 / 10.12 | ✅ 已验收 8.0 |
-| SSE 流式输出 | `main.py` `chatStreamRequest` | 10.20 | ✅ 已验收 8.0 |
-| 前端流式接收与渲染 | `app.js` `sendMessage` | 11.7.1 | ✅ 已验收 8.0 |
-| 多轮对话历史 | `main.py` `build_messages` + `app.js` `conversation` | 11.7.7 | ⚠️ 已实现，未验收 |
-| Markdown 流式渲染 | `app.js` `renderMarkdown` | 11.7.2 | ⚠️ 已实现，未验收 |
-| 停止生成 | `app.js` `stopGenerating` | 11.7.11 | ⚠️ 已实现，未验收 |
-| RAG 增强 | —— | 11.4.7 / 11.4.16 / 11.4.20 | ✅ 已验收 |
-
-> "已实现，未验收"的意思是：代码在跑，但还没经过"自己写 + 三层追问"的验收流程。
-> 面试前要把这几个点的原理自己讲一遍（对话记录里有话术模板）。
+| 能力 | 实现位置 |
+|------|---------|
+| 后端骨架 + 参数校验 | `main.py` Pydantic 模型 |
+| SSE 流式输出 | `main.py` `chatStreamRequest` |
+| 前端流式接收与渲染 | `app.js` `sendMessage` |
+| 多轮对话历史 | `main.py` `build_messages` + `app.js` `conversation` |
+| Markdown 流式渲染 | `app.js` `renderMarkdown` |
+| 停止生成 | `app.js` `stopGenerating` |
+| **RAG 检索 → 阈值过滤 → 引用来源** | `rag.py` + `rag_chain.py` |
 
 ## 代码阅读顺序
 
@@ -108,7 +109,7 @@ python3 -m http.server 5500
 4. **`frontend/app.js` 的读流循环** —— 本项目的技术核心，注意三个"必须住在循环外面"的状态变量
 5. **`frontend/app.js` 的 `stopGenerating()`** —— 停止生成的边界（它其实不是"立刻"停的）
 
-## 踩过的坑（都在对话记录里）
+## 踩过的坑
 
 | 坑 | 现象 | 根因 |
 |----|------|------|
