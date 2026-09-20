@@ -29,18 +29,32 @@
 
 ## 启动方式
 
+**环境要求**：Python **3.9+**（代码用了 `list[dict]` 这类内置泛型注解）
+
 ```bash
+git clone https://github.com/WuZL567/ai-knowledge-qa.git
+cd ai-knowledge-qa          # 下面所有命令都在仓库根目录执行
+
 # 后端（终端 1）
 cd backend
-python3 -m venv venv                # 首次：创建虚拟环境
+python3 -m venv venv                          # 首次：创建虚拟环境
 ./venv/bin/pip install -r requirements.txt
-cp .env.example .env                # 首次：填入 DeepSeek 和硅基流动的 API Key
+cp .env.example .env                          # 首次：然后编辑它，填入两把 Key
 ./venv/bin/uvicorn main:app --reload --port 8001
 
 # 前端（终端 2）
 cd frontend
 python3 -m http.server 5500
 ```
+
+**两把 Key 来自两个平台**，都要单独注册：
+
+| 变量 | 用途 | 注册地址 | 花钱吗 |
+|------|------|---------|:-----:|
+| `DEEPSEEK_API_KEY` | 对话生成 | platform.deepseek.com | 按量付费 |
+| `SILICONFLOW_API_KEY` | 向量化（`BAAI/bge-m3`） | cloud.siliconflow.cn | **免费** |
+
+> 检索用的是硅基流动的 `bge-m3`——**免费**模型，1024 维。所以跑这个 demo 只需要 DeepSeek 一份钱。
 
 浏览器打开 http://127.0.0.1:5500
 
